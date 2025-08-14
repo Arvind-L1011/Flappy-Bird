@@ -149,7 +149,6 @@ def leaderboard():
 @app.route("/profile/<id>",methods=["GET"])
 def user(id):
 
-    user_name = request.args.get("user_name")
     conn = connect_db()
     cursor = conn.cursor(dictionary=True)
 
