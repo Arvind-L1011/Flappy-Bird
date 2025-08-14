@@ -27,6 +27,11 @@ def connect_db():
     )
 
 
+@app.route("/")
+def home():
+    return "Flappy Bird API is running!"
+
+
 @app.route("/register",methods=["POST"])
 def register():
     data = request.get_json()
