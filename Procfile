@@ -1,1 +1,1 @@
-web: gunicorn Flappy-Bird.main:app
+web: gunicorn main:app
