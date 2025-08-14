@@ -29,7 +29,7 @@ def connect_db():
 
 @app.route("/")
 def home():
-    return "Flappy Bird API is running!"
+    return jsonify({"message" : "Flappy Bird API is running!"}), 200
 
 
 @app.route("/register",methods=["POST"])
@@ -40,7 +40,7 @@ def register():
     user_password = data.get("user_password")
 
     if not all ([user_name,user_password]):
-        return jsonify("Don't leave the fields blank. Fill it."), 400
+        return jsonify({"message" : "Don't leave the fields blank. Fill it."}), 400
     else:
         hashed_password = bcrypt.hashpw(user_password.encode('utf-8'), bcrypt.gensalt())
         conn = connect_db()
@@ -53,7 +53,7 @@ def register():
         if existing_user:
             cursor.close()
             conn.close()
-            return jsonify("Name already exist"), 409
+            return jsonify({"message" : "Name already exist"}), 409
         
         score = 0
         max_score = 0
@@ -67,7 +67,7 @@ def register():
         cursor.close()
         conn.close()
 
-        return jsonify("User registered successfully"), 201
+        return jsonify({"message" : "User registered successfully"}), 201
     
 
 @app.route("/login", methods=["POST"]) 
@@ -78,7 +78,7 @@ def login():
     user_password = str(data.get("user_password"))
 
     if not all ([user_name,user_password]):
-        return jsonify("Don't leave the fields blank. Fill it."), 400
+        return jsonify({"message" : "Don't leave the fields blank. Fill it."}), 400
     else:
         conn = connect_db()
         cursor = conn.cursor(dictionary=True)
@@ -90,9 +90,9 @@ def login():
         conn.close()
 
         if result and bcrypt.checkpw(user_password.encode('utf-8'), result['user_password'].encode('utf-8')):
-            return jsonify("Login successful"), 200
+            return jsonify({"message" : "Login successful"}), 200
         else:
-            return jsonify("Invalid  Name or Password"), 401
+            return jsonify({"message" : "Invalid  Name or Password"}), 401
         
         
 @app.route("/score", methods=["POST"])
@@ -103,7 +103,7 @@ def score():
     score = data.get("score")
 
     if not all ([user_name,score]):
-        return jsonify("Score = 0"), 400
+        return jsonify({"message" : "Score = 0"}), 400
     
     conn = connect_db()
     cursor = conn.cursor(dictionary=True)
@@ -126,7 +126,7 @@ def score():
     conn.close()
 
     if result:
-        return jsonify({"message": "Your score is:", "score": result['score']}), 200
+        return jsonify({"message" : "Your score is:", "score" : result['score']}), 200
 
     
 @app.route("/leaderboard",methods=["GET"])
@@ -141,9 +141,9 @@ def leaderboard():
     conn.close()
 
     if result:
-        return jsonify(result), 200
+        return jsonify({"message" : result}), 200
     else:
-        return jsonify("No Players in leaderbraed yet"), 404
+        return jsonify({"message" : "No Players in leaderbraed yet"}), 404
 
 
 @app.route("/profile/<id>",methods=["GET"])
@@ -159,9 +159,9 @@ def user(id):
     conn.close()
 
     if result:
-        return jsonify(result), 200
+        return jsonify({"message" : result}), 200
     else:
-        return jsonify("No user found"), 404
+        return jsonify({"message" : "No user found"}), 404
     
 
 
@@ -171,7 +171,7 @@ def user_patch(id):
     user_name = data.get("user_name")
 
     if not user_name:
-        return jsonify("Don't leave the fields blank. Fill it."), 400
+        return jsonify({"message" : "Don't leave the fields blank. Fill it."}), 400
     else:
         conn = connect_db()
         cursor = conn.cursor(dictionary=True)
@@ -183,13 +183,12 @@ def user_patch(id):
             cursor.close()
             conn.close()
 
-            return jsonify("Name changed successfully"), 200
+            return jsonify({"message" : "Name changed successfully"}), 200
         
         except:
-            return jsonify("Enter correct user id"), 404
+            return jsonify({"message" : "Enter correct user id"}), 404
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-    
