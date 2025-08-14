@@ -183,7 +183,7 @@ def user_patch(id):
             cursor.close()
             conn.close()
 
-            return jsonify("Data changed successfully"), 200
+            return jsonify("Name changed successfully"), 200
         
         except:
             return jsonify("Enter correct user id"), 404
