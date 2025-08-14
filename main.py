@@ -162,6 +162,31 @@ def user(id):
         return jsonify(result), 200
     else:
         return jsonify("No user found"), 404
+    
+
+
+@app.route("/profile/update/<id>",methods = ["PATCH"])
+def user_patch(id):
+    data = request.get_json()
+    user_name = data.get("user_name")
+
+    if not user_name:
+        return jsonify("Don't leave the fields blank. Fill it."), 400
+    else:
+        conn = connect_db()
+        cursor = conn.cursor(dictionary=True)
+
+        try:
+            query = "update users set user_name=%s where id = %s"
+            cursor.execute(query,(user_name,id))
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+            return jsonify("Data changed successfully"), 200
+        
+        except:
+            return jsonify("Enter correct user id"), 404
 
 
 if __name__ == "__main__":
