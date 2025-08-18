@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 import os
 import mysql.connector
 import bcrypt
+import jwt
+import datetime
 from dotenv import load_dotenv
 
 
@@ -17,6 +19,8 @@ USER_VAL = os.getenv("USER_VAL")
 PASSWORD_VAL = os.getenv("PASSWORD_VAL")
 DATABASE_VAL = os.getenv("DATABASE_VAL")
 
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+
 def connect_db():
     return mysql.connector.connect(
         host = HOST_VAL,
@@ -25,6 +29,28 @@ def connect_db():
         password = PASSWORD_VAL,
         database = DATABASE_VAL
     )
+
+
+def token_required(f):
+    def decorator(*args, **kwargs):
+        token = None
+        if "Authorization" in request.headers:
+            auth_header = request.headers.get("Authorization")
+            if auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+        
+        if not token:
+            return jsonify({"message" : "no token present"}), 401
+        try:
+            data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+            current_user = data["user_name"]
+        except jwt.ExpiredSignatureError:
+            return jsonify({"message": "Token has expired!"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"message": "Invalid token!"}), 401
+        return f(current_user, *args, **kwargs)
+    decorator.__name__ = f.__name__
+    return decorator
 
 
 @app.route("/")
@@ -90,13 +116,19 @@ def login():
         conn.close()
 
         if result and bcrypt.checkpw(user_password.encode('utf-8'), result['user_password'].encode('utf-8')):
-            return jsonify({"message" : "Login successful"}), 200
+            token = jwt.encode({
+                "user_name": user_name,
+                "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+            }, app.config["SECRET_KEY"], algorithm="HS256")
+            return jsonify({"token": token, "message":"login successful"}),200
+        
         else:
             return jsonify({"message" : "Invalid  Name or Password"}), 401
         
         
 @app.route("/score", methods=["POST"])
-def score():
+@token_required
+def score(current_user):
 
     data = request.get_json()
     user_name = data.get("user_name")
@@ -130,7 +162,8 @@ def score():
 
     
 @app.route("/leaderboard",methods=["GET"])
-def leaderboard():
+@token_required
+def leaderboard(current_user):
     conn = connect_db()
     cursor = conn.cursor(dictionary=True)
 
@@ -147,7 +180,8 @@ def leaderboard():
 
 
 @app.route("/profile/<id>",methods=["GET"])
-def user(id):
+@token_required
+def user(current_user, id):
 
     conn = connect_db()
     cursor = conn.cursor(dictionary=True)
@@ -166,7 +200,8 @@ def user(id):
 
 
 @app.route("/profile/update/<id>",methods = ["PATCH"])
-def user_patch(id):
+@token_required
+def user_patch(current_user, id):
     data = request.get_json()
     user_name = data.get("user_name")
 
