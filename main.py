@@ -159,6 +159,8 @@ def score(current_user):
 
     if result:
         return jsonify({"message" : "Your score is:", "score" : result['score']}), 200
+    else:
+        return jsonify({"message" : "Enter valid user name"}), 404
 
     
 @app.route("/leaderboard",methods=["GET"])
